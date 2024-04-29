@@ -1,0 +1,154 @@
+{% extends 'base.html' %} {% block content %}
+<h3 class="mb-4">My Transactions</h3>
+<ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+	<li class="nav-item" role="presentation">
+		<button class="nav-link {% if current_tab == 'sent_payments' %} active {% endif %}" id="sent_payments-tab" data-bs-toggle="tab" data-bs-target="#sent_payments" type="button" role="tab" aria-controls="sent_payments" aria-selected="true" onclick="changeUrlAndTab('sent_payments')">Sent Payments</button>
+	</li>
+	<li class="nav-item" role="presentation">
+		<button class="nav-link sent_payments-tab {% if current_tab == 're_payments' %} active {% endif %}" id="re_payments-tab" data-bs-toggle="tab" data-bs-target="#re_payments" type="button" role="tab" aria-controls="re_payments" aria-selected="false" onclick="changeUrlAndTab('re_payments')">Received Payments</button>
+	</li>
+	<li class="nav-item" role="presentation">
+		<button class="nav-link {% if current_tab == 'sent_request_payments' %} active {% endif %}" id="sent_request_payments-tab" data-bs-toggle="tab" data-bs-target="#sent_request_payments" type="button" role="tab" aria-controls="sent_request_payments" aria-selected="false" onclick="changeUrlAndTab('sent_request_payments')">Sent Request Payments</button>
+	</li>
+	<li class="nav-item" role="presentation">
+		<button class="nav-link {% if current_tab == 're_request_payments' %} active {% endif %}" id="re_request_payments-tab" data-bs-toggle="tab" data-bs-target="#re_request_payments" type="button" role="tab" aria-controls="re_request_payments" aria-selected="false" onclick="changeUrlAndTab('re_request_payments')">Received Request Payments</button>
+	</li>
+</ul>
+{% include 'alert.html' %}
+
+<!-- Tab panes -->
+<div class="tab-content" id="myTabContent">
+	<div class="tab-pane fade {% if current_tab == 'sent_payments' %} show active {% endif %}" id="sent_payments" role="tabpanel" aria-labelledby="sent_payments-tab">
+		<h5 class="mb-3">Sent Payments ({{sent_transactions|length}})</h5>
+		<table class="table table-striped table-hover table-bordered">
+			<thead>
+				<tr>
+					<th>#</th>
+					<th>Recipient</th>
+					<th>Amount</th>
+					<th>Timestamp</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for transaction in sent_transactions %}
+				<tr>
+					<th>{{ forloop.counter }}</th>
+					<td>{{ transaction.receiver.username }}</td>
+					<td>{{ transaction.converted_amount }} {{ transaction.currency_sign }}</td>
+					<td>{{ transaction.timestamp|timesince }} ago</td>
+				</tr>
+				{% empty %}
+				<tr>
+					<td colspan="4" class="text-center">No payment sent.</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+	<div class="tab-pane fade {% if current_tab == 're_payments' %} show active {% endif %}" id="re_payments" role="tabpanel" aria-labelledby="re_payments-tab">
+		<h5 class="mb-3">Received Payments ({{re_transactions|length}})</h5>
+		<table class="table table-striped table-hover table-bordered">
+			<thead>
+				<tr>
+					<th>#</th>
+					<th>Sender</th>
+					<th>Amount</th>
+					<th>Timestamp</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for transaction in re_transactions %}
+				<tr>
+					<th>{{ forloop.counter }}</th>
+					<td>{{ transaction.sender.username }}</td>
+					<td>{{ transaction.converted_amount }} {{ transaction.currency_sign }}</td>
+					<td>{{ transaction.timestamp|timesince }} ago</td>
+				</tr>
+				{% empty %}
+				<tr>
+					<td colspan="4" class="text-center">No payment received.</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+	<div class="tab-pane fade {% if current_tab == 'sent_request_payments' %} show active {% endif %}" id="sent_request_payments" role="tabpanel" aria-labelledby="sent_request_payments-tab">
+		<h5 class="mb-3">Sent Request Payments ({{sent_request_transactions|length}})</h5>
+		<table class="table table-striped table-hover table-bordered">
+			<thead>
+				<tr>
+					<th>#</th>
+					<th>Recipient</th>
+					<th>Amount</th>
+					<th>Timestamp</th>
+					<th>Action</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for transaction in sent_request_transactions %}
+				<tr>
+					<th>{{ forloop.counter }}</th>
+					<td>{{ transaction.sender.username }}</td>
+					<td>{{ transaction.converted_amount }} {{transaction.currency_sign }}</td>
+					<td>{{ transaction.timestamp|timesince }} ago</td>
+					<td>
+						{% if transaction.is_rejected %}
+						<button class="btn btn-danger btn-sm disabled" disabled>Rejected</button>
+						{% elif transaction.is_accepted %}
+						<button class="btn btn-primary btn-sm disabled" disabled>Received</button>
+						{% else %}
+						<button class="btn btn-primary btn-sm disabled" disabled>Pending</button>
+						{% endif %}
+					</td>
+				</tr>
+				{% empty %}
+				<tr>
+					<td colspan="5" class="text-center">No payment request sent.</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+	<div class="tab-pane fade {% if current_tab == 're_request_payments' %} show active {% endif %}" id="re_request_payments" role="tabpanel" aria-labelledby="re_request_payments-tab">
+		<h5 class="mb-3">Received Request Payments ({{re_request_transactions|length}})</h5>
+		<table class="table table-striped table-hover table-bordered">
+			<thead>
+				<tr>
+					<th>#</th>
+					<th>Sender</th>
+					<th>Amount</th>
+					<th>Timestamp</th>
+					<th>Action</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for transaction in re_request_transactions %}
+				<tr>
+					<th>{{ forloop.counter }}</th>
+					<td>{{ transaction.receiver.username }}</td>
+					<td>
+                        {{ transaction.converted_amount }} {{transaction.currency_sign }}
+                    </td>
+					<td>{{ transaction.timestamp|timesince }} ago</td>
+					<td>
+						{% if transaction.is_rejected %}
+						<button class="btn btn-danger btn-sm disabled" disabled>Rejected</button>
+						{% elif transaction.is_accepted %}
+						<button class="btn btn-primary btn-sm disabled" disabled>Accepted</button>
+						{% else %}
+						<a href="{% url 'accept_payment_request' transaction.id %}" class="btn btn-primary btn-sm">Accept</a>
+						<a href="{% url 'reject_payment_request' transaction.id %}" class="btn btn-danger btn-sm ms-1">Reject</a>
+						{% endif %}
+					</td>
+				</tr>
+				{% empty %}
+				<tr>
+					<td colspan="5" class="text-center">No payment request received.</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+
+{% endblock %}

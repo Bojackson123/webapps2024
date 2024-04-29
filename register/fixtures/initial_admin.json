@@ -1,0 +1,12 @@
+[
+	{
+		"model": "register.user",
+		"pk": 1,
+		"fields": {
+			"username": "admin1",
+			"password": "pbkdf2_sha256$600000$5D6mz6moeEIX8DcfKrThcm$bjKD9mbDwADYJYo2B4es7cS2ItBy7gi1qQ8VtnBcovc=",
+			"is_superuser": true,
+			"is_staff": true
+		}
+	}
+]

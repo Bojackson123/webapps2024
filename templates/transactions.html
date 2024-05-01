@@ -34,7 +34,13 @@
 				<tr>
 					<th>{{ forloop.counter }}</th>
 					<td>{{ transaction.receiver.username }}</td>
-					<td>{{ transaction.amount }} {{ transaction.sender_currency_sign }}</td>
+					<td>
+                        {% if transaction.is_request %}
+                        {{ transaction.converted_amount }} {{ transaction.sender_currency_sign }}
+                        {% else %}
+                        {{ transaction.amount }} {{ transaction.sender_currency_sign }}
+                        {% endif %}
+                    </td>
 					<td>{{ transaction.timestamp|timesince }} ago</td>
 				</tr>
 				{% empty %}

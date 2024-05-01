@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'RESTServiceAPI',
     'django_extensions',
-    'sslserver',
+    'channels',
+    'notification'
 ]
 
 MIDDLEWARE = [
@@ -95,6 +96,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'webapps2024.wsgi.application'
 
+ASGI_APPLICATION = 'webapps2024.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 

@@ -46,7 +46,7 @@
 						<span class="username">{{ user.username }}</span>
 						-
 						<i class="fa fa-money"></i>
-						<span class="balance">{{user.get_currency_sign}}{{ user.balance }}</span>
+						<span class="balance">{{ user.get_currency_sign }}{{ user.balance|floatformat:2 }}</span>
 					</span>
 				</div>
 			</div>

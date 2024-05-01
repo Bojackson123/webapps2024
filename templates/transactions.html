@@ -34,7 +34,7 @@
 				<tr>
 					<th>{{ forloop.counter }}</th>
 					<td>{{ transaction.receiver.username }}</td>
-					<td>{{ transaction.converted_amount }} {{ transaction.currency_sign }}</td>
+					<td>{{ transaction.amount }} {{ transaction.sender_currency_sign }}</td>
 					<td>{{ transaction.timestamp|timesince }} ago</td>
 				</tr>
 				{% empty %}
@@ -61,7 +61,13 @@
 				<tr>
 					<th>{{ forloop.counter }}</th>
 					<td>{{ transaction.sender.username }}</td>
-					<td>{{ transaction.converted_amount }} {{ transaction.currency_sign }}</td>
+					<td>
+                        {% if transaction.is_request %}
+                        {{ transaction.amount }} {{ transaction.receiver_currency_sign }}
+                        {% else %}
+                        {{ transaction.converted_amount }} {{ transaction.receiver_currency_sign }}
+                        {% endif %}
+                    </td>
 					<td>{{ transaction.timestamp|timesince }} ago</td>
 				</tr>
 				{% empty %}
@@ -89,7 +95,7 @@
 				<tr>
 					<th>{{ forloop.counter }}</th>
 					<td>{{ transaction.sender.username }}</td>
-					<td>{{ transaction.converted_amount }} {{transaction.currency_sign }}</td>
+					<td>{{ transaction.amount }} {{transaction.receiver_currency_sign }}</td>
 					<td>{{ transaction.timestamp|timesince }} ago</td>
 					<td>
 						{% if transaction.is_rejected %}
@@ -127,7 +133,7 @@
 					<th>{{ forloop.counter }}</th>
 					<td>{{ transaction.receiver.username }}</td>
 					<td>
-                        {{ transaction.converted_amount }} {{transaction.currency_sign }}
+                        {{ transaction.converted_amount }} {{transaction.sender_currency_sign }}
                     </td>
 					<td>{{ transaction.timestamp|timesince }} ago</td>
 					<td>

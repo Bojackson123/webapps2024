@@ -10,8 +10,9 @@ class User(AbstractUser):
         ("USD", "US Dollar"),
         ("EUR", "Euro"),
     ]
-    balance = models.DecimalField(max_digits=30, decimal_places=2, default=1000.00)
-    currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default="USD")
+
+    balance = models.DecimalField(max_digits=30, decimal_places=10, default=1000.0000000000)
+    currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default="GBP")
 
     CURRENCY_SIGNS = {
         "USD": "$",

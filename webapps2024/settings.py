@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,10 +20,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-_lk-udo&)(swam6zn%-lamzlj#h*dhv=3dcv*tm%*-+@c6=4@y'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = ['*']
 
@@ -39,6 +40,8 @@ INSTALLED_APPS = [
     'payapp.apps.PayappConfig',
     'rest_framework',
     'RESTServiceAPI',
+    'django_extensions',
+    'sslserver',
 ]
 
 MIDDLEWARE = [
@@ -52,11 +55,21 @@ MIDDLEWARE = [
 ]
 
 # Security Settings
-# SECURE_SSL_REDIRECT = True
-# SESSION_COOKIE_SECURE = True
-# CSRF_COOKIE_SECURE = True
+# HTTPS settings. Mark "True" for production.
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+# Clickjacking setting.
 X_FRAME_OPTIONS = 'DENY'
+# Cross-site scripting setting.
 SECURE_BROWSER_XSS_FILTER = True
+
+# Since using a self-signed certificate I cannot make calls to my
+# RESTServiceAPI unless I bypass SSL verification.
+# My SSL certificate in production is not self-signed
+# For production mark "True"
+VERIFY_SSL = True
+
 
 ROOT_URLCONF = 'webapps2024.urls'
 AUTH_USER_MODEL = 'register.User'

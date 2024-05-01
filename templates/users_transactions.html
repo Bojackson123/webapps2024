@@ -46,7 +46,13 @@
 						<span>(admin)</span>
 						{% endif %}
 					</td>
-					<td>{{ transaction.converted_amount}} {{transaction.currency_sign}}</td>
+					<td>
+                        {% if transaction.is_request %}
+                        {{ transaction.converted_amount}} {{transaction.sender_currency_sign}}
+                        {% else %}
+                        {{ transaction.amount}} {{transaction.sender_currency_sign}}
+                        {% endif %}
+                    </td>
 					<td>
 						{% if transaction.is_request %}
 						<!--  -->
@@ -89,7 +95,7 @@
 					<td>{{ each_user.first_name }}</td>
 					<td>{{ each_user.last_name }}</td>
 					<td>{{ each_user.username }}</td>
-					<td>{{ each_user.get_currency_sign }}{{ each_user.balance }}</td>
+					<td>{{ each_user.get_currency_sign }}{{ each_user.balance|floatformat:2 }}</td>
 					<td>{{ each_user.date_joined|timesince }} ago</td>
 					<td>
 						{% if each_user.username == request.user.username %}
@@ -138,6 +144,14 @@
 						<div class="form-group mb-4">
 							<input type="password" class="form-control rounded-left" placeholder="Password" name="password" required />
 						</div>
+                        <div class="form-group mb-4">
+                            <select class="form-control rounded-left" name="currency" required>
+                                <option value="">Select Currency</option>
+                                <option value="USD">USD</option>
+                                <option value="GBP">GBP</option>
+                                <option value="EUR">EUR</option>
+                            </select>
+                        </div>
 						<div class="form-group mb-4">
 							<button type="submit" class="form-control btn btn-primary rounded submit px-3">Create</button>
 						</div>

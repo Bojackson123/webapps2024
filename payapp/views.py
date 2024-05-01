@@ -10,9 +10,14 @@ from django.contrib.auth import get_user_model
 from django.contrib.admin.views.decorators import staff_member_required
 from .forms import CurrencyForm
 from django.urls import reverse
+from django.db.models import Q
+from django.views.decorators.csrf import csrf_protect
+from django.conf import settings
 
 User = get_user_model()
 
+
+@csrf_protect
 @login_required(login_url='/webapps2024/login/')
 def send_payment(request):
     if request.method == "POST":
@@ -48,15 +53,16 @@ def send_payment(request):
                                 'amount_of_currency1': amount
                             })
                         )
-                        response = requests.get(url)
+                        response = requests.get(url, verify=settings.VERIFY_SSL)
                         data = response.json()
-                        amount = Decimal(data["converted_amount"])
+                        converted_amount = Decimal(data["converted_amount"])
 
-                    receiver.balance += amount
+                    receiver.balance += converted_amount
                     Transaction.objects.create(
                         sender=request.user, receiver=receiver,
                         amount=amount, converted_amount=converted_amount,
-                        currency_sign=request.user.currency
+                        sender_currency_sign=request.user.currency,
+                        receiver_currency_sign=receiver.currency
                     )
                     request.user.save()
                     receiver.save()
@@ -72,6 +78,7 @@ def send_payment(request):
     return render(request, "send_payment.html")
 
 
+@csrf_protect
 @login_required(login_url='/webapps2024/login/')
 def request_payment(request):
     if request.method == "POST":
@@ -93,13 +100,13 @@ def request_payment(request):
                         'amount_of_currency1': amount
                     })
                 )
-                response = requests.get(url)
+                response = requests.get(url, verify=settings.VERIFY_SSL)
                 data = response.json()
                 converted_amount = Decimal(data["converted_amount"])
             tr = Transaction.objects.create(
                 sender=receiver, receiver=request.user, amount=amount,
-                converted_amount=converted_amount, currency_sign=receiver.currency,
-                is_request=True
+                converted_amount=converted_amount, sender_currency_sign=receiver.currency,
+                receiver_currency_sign=request.user.currency, is_request=True
             )
             tr.save()
             messages.success(request, "Payment request sent successfully.")
@@ -108,9 +115,6 @@ def request_payment(request):
             messages.error(request, "Invalid receiver or amount.")
 
     return render(request, "request_payment.html")
-
-
-from django.db.models import Q
 
 
 @login_required(login_url='/webapps2024/login/')
@@ -198,6 +202,7 @@ def reject_payment_request(request, request_id):
     return redirect(url)
 
 
+@csrf_protect
 @login_required(login_url='/webapps2024/login/')
 def change_currency(request):
     if request.method == "POST":
@@ -215,7 +220,7 @@ def change_currency(request):
                     'amount_of_currency1': amount_of_currency1
                 })
             )
-            response = requests.get(url)
+            response = requests.get(url, verify=settings.VERIFY_SSL)
             data = response.json()
             user.balance = float(data["converted_amount"])
             user.currency = currency2
@@ -253,6 +258,7 @@ def change_admin_status(request):
     return redirect(url)
 
 
+@csrf_protect
 @staff_member_required
 @login_required(login_url='/webapps2024/login/')
 def create_admin(request):
@@ -264,6 +270,7 @@ def create_admin(request):
         username = request.POST.get("username")
         email = request.POST.get("email")
         password = request.POST.get("password")
+        currency = request.POST.get("currency")
         try:
 
             if User.objects.filter(username=username).first():
@@ -274,16 +281,42 @@ def create_admin(request):
                 messages.error(request, "Email is taken.")
                 return redirect(url)
 
-            user = User.objects.create_user(
-                first_name=first_name,
-                last_name=last_name,
-                email=email,
-                username=username,
-                password=password,
-            )
-            user.is_superuser = True
-            user.is_staff = True
-            user.save()
+            if not request.POST.get('currency') == 'GBP':
+
+                url1 = request.build_absolute_uri(
+                    reverse('convert_currency', kwargs={
+                        'currency1': 'GBP', 'currency2': request.POST.get('currency'),
+                        'amount_of_currency1': '1000.00'
+                    })
+                )
+                response = requests.get(url1, verify=settings.VERIFY_SSL)
+                data = response.json()
+                converted_balance = float(data["converted_amount"])
+
+                user = User.objects.create_user(
+                    first_name=first_name,
+                    last_name=last_name,
+                    email=email,
+                    username=username,
+                    password=password,
+                    currency=currency,
+                    balance=converted_balance,
+                )
+                user.is_superuser = True
+                user.is_staff = True
+                user.save()
+            else:
+                user = User.objects.create_user(
+                    first_name=first_name,
+                    last_name=last_name,
+                    email=email,
+                    username=username,
+                    password=password,
+                    currency=currency,
+                )
+                user.is_superuser = True
+                user.is_staff = True
+                user.save()
 
             messages.success(request, f"Super user {username} created successfully.")
 

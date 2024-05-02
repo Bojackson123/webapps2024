@@ -23,5 +23,3 @@ class User(AbstractUser):
     def get_currency_sign(self):
         return self.CURRENCY_SIGNS.get(self.currency, self.currency)
 
-    def __str__(self):
-        return f"{self.username} ({self.currency} {self.balance})"

@@ -20,5 +20,4 @@ class Transaction(models.Model):
     is_convert = models.BooleanField(default=False)
     timestamp = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"From {self.sender.username} to {self.receiver.username} - Amount: {self.amount}"
+

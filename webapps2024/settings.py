@@ -58,8 +58,8 @@ MIDDLEWARE = [
 # Security Settings
 # HTTPS settings. Mark "True" for production.
 SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
 # Clickjacking setting.
 X_FRAME_OPTIONS = 'DENY'
 # Cross-site scripting setting.
@@ -69,7 +69,7 @@ SECURE_BROWSER_XSS_FILTER = True
 # RESTServiceAPI unless I bypass SSL verification.
 # My SSL certificate in production is not self-signed
 # For production mark "True"
-VERIFY_SSL = True
+VERIFY_SSL = False
 
 
 ROOT_URLCONF = 'webapps2024.urls'
@@ -86,6 +86,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'notification.context_processors.add_notifications',
             ],
             'builtins': [
                 "django.templatetags.static",

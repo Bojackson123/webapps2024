@@ -9,7 +9,18 @@
 		<link rel="icon" type="image/png" href="https://png.pngtree.com/png-vector/20230423/ourmid/pngtree-digital-wallet-line-icon-vector-png-image_6720088.png" />
         <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
         <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+        <style>
+            .dropdown-menu {
+                right: 0 !important;
+                left: auto !important;
+            }
+            .fa-inbox.unread {
+                color: red
+            }
+        </style>
 		<title>DigitalWallet</title>
 	</head>
 	<body>
@@ -43,13 +54,25 @@
 							<a class="nav-link" href="{% url 'logout' %}">Logout</a>
 						</li>
 					</ul>
-					<span class="navbar-text">
-						<i class="fa fa-user"></i>
-						<span class="username">{{ user.username }}</span>
-						-
-						<i class="fa fa-money"></i>
-						<span class="balance">{{ user.get_currency_sign }}{{ user.balance|floatformat:2 }}</span>
-					</span>
+                    <div class="navbar-text d-flex align-items-center">
+                        <div class="dropdown">
+                            <i class="fa fa-inbox{% if has_unread %} unread{% endif %}" id="notification"></i>
+                            <span class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Inbox</span>
+                            <div class="dropdown-menu dropdown-menu-left" aria-labelledby="notificationDropdown">
+                                {% for notification in notifications %}
+                                    <a class="dropdown-item" href={{ notification.href }}>{{ notification.message }}</a>
+                                    {% empty %}
+                                    <a class="dropdown-item">No notifications</a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <span class="mx-2">-</span>
+                        <i class="fa fa-user"></i>
+                        <span class="username mx-1">{{ user.username }}</span>
+                        <span class="mx-2">-</span>
+                        <i class="fa fa-money"></i>
+                        <span class="balance mx-1">{{ user.get_currency_sign }}{{ user.balance|floatformat:2 }}</span>
+                    </div>
 				</div>
 			</div>
 		</nav>
@@ -62,28 +85,45 @@
 			}
 		</script>
         <script>
-            const wsStart = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-            const ws = new WebSocket(wsStart + window.location.host + '/ws/notifications/');
+            document.addEventListener('DOMContentLoaded', function () {
+                const wsStart = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+                const ws = new WebSocket(wsStart + window.location.host + '/ws/notifications/');
+                const inboxIcon = document.getElementById('notification');
+                const dropdownMenu = document.querySelector('.dropdown-menu');
 
-            ws.onmessage = function(e) {
-                const data = JSON.parse(e.data);
-                Toastify({
-                    text: data.message,
-                    duration: 6000,
-                    close: true,
-                    gravity: "top",
-                    position: "center",
-                    stopOnFocus: true,
-                    backgroundColor: "#fff",
-                    style: {
-                        color: "#333",
-                        fontSize: "16px",
-                        fontFamily: "'Helvetica Neue', sans-serif",
-                        border: "1px solid #ccc",
-                        borderRadius: "4px",
-                    }
-                }).showToast();
-            };
+                ws.onmessage = function(e) {
+                    const data = JSON.parse(e.data);
+                    console.log(data)
+                    inboxIcon.style.color = 'red';
+
+                    const newNotification = document.createElement('a');
+                    newNotification.classList.add('dropdown-item');
+                    newNotification.href = data.url;
+                    newNotification.textContent = data.message;
+                    dropdownMenu.insertBefore(newNotification, dropdownMenu.firstChild);
+
+                    const balanceSpan = document.querySelector('.balance');
+                    balanceSpan.textContent = `${data.currency_sign}${parseFloat(data.balance).toFixed(2)}`
+                };
+
+                document.querySelector('.dropdown-toggle').addEventListener('click', function () {
+                    inboxIcon.style.color = 'grey';
+
+                    fetch('/notifications/mark-as-read/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('Success:', data);
+                        })
+                        .catch((error) => {
+                            console.error('Error:', error);
+                        });
+                });
+            });
         </script>
     </body>
 </html>

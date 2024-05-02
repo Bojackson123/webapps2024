@@ -13,10 +13,10 @@ from django.urls import reverse
 from django.db.models import Q
 from django.views.decorators.csrf import csrf_protect
 from django.conf import settings
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
+from notification.views import send_notification
 
 User = get_user_model()
+
 
 
 @csrf_protect
@@ -68,18 +68,12 @@ def send_payment(request):
                     )
                     request.user.save()
                     receiver.save()
-                    channel_layer = get_channel_layer()
-                    # noinspection PyArgumentList
-                    async_to_sync(channel_layer.group_send)(
-                        f"user_{receiver.id}",
-                        {
-                            "type": "send_notification",
-                            "text": {
-                                "message":
-                                    f"You've received {round(converted_amount, 2)} {receiver.currency} from User: {request.user.username}"
-                            }
-                        }
-                    )
+                    message=f"You've received {round(converted_amount, 2)} {receiver.currency} from User: {request.user.username}"
+                    balance = float(receiver.balance)
+                    sign = receiver.get_currency_sign()
+                    print(balance, sign)
+                    send_notification(receiver, message, '/webapps2024/?tab=re_payments', balance,
+                                      sign)
 
                 messages.success(request, "Transaction completed successfully.")
                 return redirect(
@@ -123,19 +117,11 @@ def request_payment(request):
                 receiver_currency_sign=request.user.currency, is_request=True
             )
             tr.save()
-
-            channel_layer = get_channel_layer()
-            # noinspection PyArgumentList
-            async_to_sync(channel_layer.group_send)(
-                f"user_{receiver.id}",
-                {
-                    "type": "send_notification",
-                    "text": {
-                        "message":
-                            f"You've received a PAYMENT REQUEST of {round(converted_amount, 2)} {receiver.currency} from User: {request.user.username}"
-                    }
-                }
-            )
+            message = f"Payment Request of {round(converted_amount, 2)} {receiver.currency} from User: {request.user.username}"
+            balance = float(receiver.balance)
+            sign = receiver.get_currency_sign()
+            send_notification(receiver, message, '/webapps2024/?tab=re_request_payments',
+                              balance, sign)
 
             messages.success(request, "Payment request sent successfully.")
             return redirect("request_payment")
@@ -206,19 +192,11 @@ def accept_payment_request(request, request_id):
             request.user.save()
             transaction.receiver.save()
             transaction.save()
-
-            channel_layer = get_channel_layer()
-            # noinspection PyArgumentList
-            async_to_sync(channel_layer.group_send)(
-                f"user_{transaction.receiver.id}",
-                {
-                    "type": "send_notification",
-                    "text": {
-                        "message":
-                            f"You've received {round(transaction.amount, 2)} {transaction.receiver.currency} from User: {request.user.username}"
-                    }
-                }
-            )
+            message = f"User: {transaction.sender.username} Accepted your payment request of {transaction.amount} {transaction.receiver.currency}."
+            balance = float(transaction.receiver.balance)
+            sign = transaction.receiver.get_currency_sign()
+            send_notification(transaction.receiver, message, '/webapps2024/?tab=sent_request_payments',
+                              balance, sign)
 
             messages.success(request, "Payment request accepted successfully.")
     else:
@@ -236,19 +214,11 @@ def reject_payment_request(request, request_id):
     if transaction:
         transaction.is_rejected = True
         transaction.save()
-
-        channel_layer = get_channel_layer()
-        # noinspection PyArgumentList
-        async_to_sync(channel_layer.group_send)(
-            f"user_{transaction.receiver.id}",
-            {
-                "type": "send_notification",
-                "text": {
-                    "message":
-                        f"User: {transaction.sender.username} REJECTED your payment request of {transaction.amount} {transaction.receiver.currency}."
-                }
-            }
-        )
+        message = f"User: {transaction.sender.username} Rejected your payment request of {transaction.amount} {transaction.receiver.currency}."
+        balance = float(transaction.receiver.balance)
+        sign = transaction.receiver.get_currency_sign()
+        send_notification(transaction.receiver, message, '/webapps2024/?tab=sent_request_payments',
+                          balance, sign)
 
         messages.success(request, "Payment request rejected successfully.")
     else:

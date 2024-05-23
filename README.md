@@ -1,5 +1,18 @@
 # webapps2024
 
+This is a paypal clone for the third year module Web Applications and Services required for my BCS Degree from the University of Sussex.
+
+Tech Stack:
+Full native Django app with HTML templating.
+
+Outcomes:
+Django Templating and View intergration.
+RESTful API service for currency exchange.
+Database models for data persistance.
+Real time notification system via websockets. 
+
+How to run locally:
+
 1.) Open a new terminal.
 
 2.) Run command "pip install -r requirements.txt"
